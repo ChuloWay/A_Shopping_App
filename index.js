@@ -26,7 +26,7 @@ app.use(express.urlencoded({ extended: true }))
 app.use(methodOverride('_method'))
 
 
-const categories= ['fruit', 'vegetables', 'dairy'];
+let categories= ['fruit', 'vegetables', 'dairy'];
 
 
 app.get('/products', async (req, res) => {
@@ -63,6 +63,12 @@ app.put('/products/:id', async (req, res) => {
     console.log('hello');
     // with await its now possible to access product._id
     res.redirect(`/products/${product._id}`);
+})
+
+app.delete('/products/:id', async (req,res)=> {
+    const { id } = req.params;
+    const productDelete = await Product.findByIdAndDelete(id, req.body)
+    res.redirect('/products');
 })
 
 
