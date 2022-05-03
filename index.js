@@ -26,20 +26,27 @@ app.use(express.urlencoded({ extended: true }))
 app.use(methodOverride('_method'))
 
 
-let categories= ['fruit', 'vegetables', 'dairy'];
+let categories = ['fruit', 'vegetable', 'dairy'];
 
 
 app.get('/products', async (req, res) => {
-    const products = await Product.find({})
-    res.render('products/index', { products })
+    const { category } = req.query;
+    if (category) {
+        const products = await Product.find({category})
+        res.render('products/index', { products,category })
+
+    } else {
+        const products = await Product.find({})
+        res.render('products/index', { products, category: 'All' })
+
+    }
 })
 app.get('/products/new', (req, res) => {
-    res.render('products/new', {categories} )
+    res.render('products/new', { categories })
 })
 app.post('/products', async (req, res) => {
     const newProduct = new Product(req.body);
     await newProduct.save();
-    console.log(newProduct);
     res.redirect(`/products/${newProduct._id}`)
 })
 
@@ -65,7 +72,7 @@ app.put('/products/:id', async (req, res) => {
     res.redirect(`/products/${product._id}`);
 })
 
-app.delete('/products/:id', async (req,res)=> {
+app.delete('/products/:id', async (req, res) => {
     const { id } = req.params;
     const productDelete = await Product.findByIdAndDelete(id, req.body)
     res.redirect('/products');
