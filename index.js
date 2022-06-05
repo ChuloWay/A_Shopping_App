@@ -56,7 +56,7 @@ app.post('/farms', async (req, res) => {
 
 // Linking products to farm
 
-
+//Mongo-Relationship: Creating a model field that appears inside another
 app.get('farms/:id/products/new', (req, res) => {
     const { id } = req.params;
     res.render('products/new', { categories, id })
