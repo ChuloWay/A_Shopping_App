@@ -4,11 +4,19 @@ const path = require('path')
 const mongoose = require('mongoose');
 const methodOverride = require('method-override')
 const AppError = require('./AppError');
+const session = require('express-session');
+const flash = require('connect-flash')
 
 const Product = require('./models/product');
 const Farm = require('./models/farm');  
+const res = require('express/lib/response');
 
 const categories = ['fruit', 'vegetable', 'dairy'];
+
+const sessionOptions = { secret:'topsecret', resave: false, saveUninitialized: false};
+app.use(session(sessionOptions));
+app.use(flash());
+
 
 
 mongoose.connect('mongodb://localhost:27017/testfarm', { useNewUrlParser: true })
@@ -26,6 +34,11 @@ mongoose.connect('mongodb://localhost:27017/testfarm', { useNewUrlParser: true }
 app.set('views', path.join(__dirname, 'views'))
 app.set('view engine', 'ejs')
 
+app.use((req,res,next)=>{
+    res.locals.messages= req.flash('Success');
+    next();
+})
+
 //middleware used to get access to req.body
 app.use(express.urlencoded({ extended: true }))
 // middleware used to make other forms of http verbs
@@ -34,7 +47,7 @@ app.use(methodOverride('_method'))
 // Farm Routes
 app.get('/farms', async (req, res) => {
     const farms = await Farm.find({})
-    res.render('farms/index', { farms })
+    res.render('farms/index', { farms})
 })
 
 app.get('/farms/new', (req, res) => {
@@ -51,6 +64,7 @@ app.post('/farms', async (req, res) => {
     const farm = new Farm(req.body)
     await farm.save();
     console.log(farm); 
+    req.flash('Success', 'Made a new Farm Entry!')
     res.redirect('/farms')
 })
 
