@@ -1,3 +1,6 @@
+const AdminJs = require('adminjs');
+const AdminJsExpress = require('@adminjs/express');
+const AdminJsMongoose = require('@adminjs/mongoose');
 const express = require('express');
 const app = express();
 const path = require('path')
@@ -6,6 +9,16 @@ const methodOverride = require('method-override')
 const AppError = require('./AppError');
 const session = require('express-session');
 const flash = require('connect-flash')
+const Db = require('./admin')
+
+AdminJs.registerAdapter(AdminJsMongoose)
+
+// const adminJs = new AdminJs({
+//     databases: [Db], 
+//     rootPath: '/admin',
+// });
+
+const router = AdminJsExpress.buildRouter(adminJs)
 
 const Product = require('./models/product');
 const Farm = require('./models/farm');  
@@ -18,22 +31,33 @@ app.use(session(sessionOptions));
 app.use(flash());
 
 
+// mongoose.connect('mongodb://localhost:27017/testfarm', { useNewUrlParser: true })
+//     .then(() => {
+//         console.log("Connection Started On MongoDb!!");
+//     })
+//     .catch(err => {
+//         console.log('Oh No Error In Connecting To Mongo');
+//         console.log(err);
+//     })
 
-mongoose.connect('mongodb://localhost:27017/testfarm', { useNewUrlParser: true })
-    .then(() => {
-        console.log("Connection Started On MongoDb!!");
+const run = async () => {
+    const connection = await mongoose.connect('mongodb://localhost:27017/test', {
+    useNewUrlParser: true,
     })
-    .catch(err => {
-        console.log('Oh No Error In Connecting To Mongo');
-        console.log(err);
+    const AdminJS = new AdminJS({
+    databases: [connection],
+    //... other AdminJSOptions
     })
-
+    //...
+    }
+    run()
 
 
 
 app.set('views', path.join(__dirname, 'views'))
 app.set('view engine', 'ejs')
 
+app.use(adminJs.options.rootPath, router)
 app.use((req,res,next)=>{
     res.locals.messages= req.flash('Success');
     next();
@@ -43,6 +67,11 @@ app.use((req,res,next)=>{
 app.use(express.urlencoded({ extended: true }))
 // middleware used to make other forms of http verbs
 app.use(methodOverride('_method'))
+
+
+app.get('/', (req,res)=>{
+    res.send("started")
+})
 
 // Farm Routes
 app.get('/farms', async (req, res) => {
