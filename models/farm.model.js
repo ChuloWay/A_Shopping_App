@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const Product = require('./product');
+const Product = require('./product.model');
 const {Schema} = mongoose;
 
 
@@ -30,6 +30,11 @@ farmSchema.post('findOneAndDelete', async function (farm) {
     }
 })
 
+
 const Farm = mongoose.model('Farm', farmSchema);
 
-module.exports = Farm;
+
+module.exports = {
+    Farm,
+    farmSchema,
+}

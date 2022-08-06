@@ -1,6 +1,7 @@
 const AdminJS = require('adminjs');
 const AdminJSExpress = require('@adminjs/express');
 const AdminJSMongoose = require('@adminjs/mongoose');
+
 AdminJS.registerAdapter(AdminJSMongoose);
 const express = require('express');
 const app = express();
@@ -11,18 +12,22 @@ const AppError = require('./AppError');
 const session = require('express-session');
 const flash = require('connect-flash')
 
-
+const {Product} = require('./models/product.model');
+const { Farm } = require('./models/farm.model');  
+const {ProductResourceOptions} = require('./models/product.option')
+const {PositionResourceOptions} = require("./position/position.options")
+const {FarmResourceOptions} = require("./models/farm.options")
 // init adminJS
 const adminJS = new AdminJS({
     databases: [],
     rootPath: '/admin',
+    resources: [PositionResourceOptions, FarmResourceOptions, ProductResourceOptions]
 });
 const adminJSRouter = AdminJSExpress.buildRouter(adminJS);
 
 
 app.use(adminJS.options.rootPath, adminJSRouter);
-const Product = require('./models/product');
-const Farm = require('./models/farm');  
+
 
 const categories = ['fruit', 'vegetable', 'dairy'];
 
