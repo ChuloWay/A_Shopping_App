@@ -37,6 +37,7 @@ app.use(bodyParser.json());
 const  jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const config = require('./config');
+const verify = require('./verify');
 
 
 const categories = ['fruit', 'vegetable', 'dairy'];
@@ -98,15 +99,9 @@ app.post('/register', async(req,res)=>{
     });
 
 
-app.get('/me', function(req, res) {
-    var token = req.headers['x-access-token'];
-    if (!token) return res.status(401).send({ auth: false, message: 'No token provided.' });
-    
-    jwt.verify(token, config.secret, function(err, decoded) {
-      if (err) return res.status(500).send({ auth: false, message: 'Failed to authenticate token.' });
-      
+app.get('/me',verify, function(req, res, next) {
     //   res.status(200).send(decoded);
-    User.findById(decoded.id,
+    User.findById(req.userId,
         // removes password from being seen
         {password: 0}, function(err, user){
         if (err) return res.status(500).send("There was a problem");
@@ -116,7 +111,7 @@ app.get('/me', function(req, res) {
         res.status(200).send(user)
     })
     });
-  });
+  
 
 
 app.post('/login', (req,res)=>{
@@ -136,6 +131,10 @@ app.post('/login', (req,res)=>{
 
     })
 })
+
+app.post('/logout', (req,res)=>{
+    res.status(200).send({ auth: false, token: null});
+});
 
 // Farm Routes
 app.get('/farms', async (req, res) => {
