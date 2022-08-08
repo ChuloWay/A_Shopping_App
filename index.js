@@ -105,12 +105,37 @@ app.get('/me', function(req, res) {
     jwt.verify(token, config.secret, function(err, decoded) {
       if (err) return res.status(500).send({ auth: false, message: 'Failed to authenticate token.' });
       
-      res.status(200).send(decoded);
+    //   res.status(200).send(decoded);
+    User.findById(decoded.id,
+        // removes password from being seen
+        {password: 0}, function(err, user){
+        if (err) return res.status(500).send("There was a problem");
+        if(!user) return res.status(404).send("No User");
+
+
+        res.status(200).send(user)
+    })
     });
   });
 
 
+app.post('/login', (req,res)=>{
+    User.findOne({email: req.body.email}, function(err,user) {
+        if(err) return res.status(500).send("server error")
+        if(!user) return res.status(404).send("No User") 
+        
+        
 
+        const validPassword = bcrypt.compareSync(req.body.password, user.password);
+        if(!validPassword) return res.status(401).send({auth: false, token: null});
+
+        const token = jwt.sign({ id: user._id}, config.secret, {
+            expiresIn: 86400
+        });
+        res.status(200).send({auth: true, token: token});
+
+    })
+})
 
 // Farm Routes
 app.get('/farms', async (req, res) => {
