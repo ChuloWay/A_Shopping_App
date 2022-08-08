@@ -3,6 +3,8 @@ const AdminJSExpress = require('@adminjs/express');
 const AdminJSMongoose = require('@adminjs/mongoose');
 
 AdminJS.registerAdapter(AdminJSMongoose);
+
+const bodyParser = require('body-parser')
 const express = require('express');
 const app = express();
 const path = require('path')
@@ -14,19 +16,27 @@ const flash = require('connect-flash')
 
 const {Product} = require('./models/product.model');
 const { Farm } = require('./models/farm.model');  
+const {User} = require('./User/user.model')
 const {ProductResourceOptions} = require('./models/product.option')
-const {PositionResourceOptions} = require("./position/position.options")
+const {UserResourceOptions} = require("./User/user.options")
 const {FarmResourceOptions} = require("./models/farm.options")
 // init adminJS
 const adminJS = new AdminJS({
     databases: [],
     rootPath: '/admin',
-    resources: [PositionResourceOptions, FarmResourceOptions, ProductResourceOptions]
+    resources: [UserResourceOptions, FarmResourceOptions, ProductResourceOptions]
 });
 const adminJSRouter = AdminJSExpress.buildRouter(adminJS);
 
 
 app.use(adminJS.options.rootPath, adminJSRouter);
+
+app.use(bodyParser.urlencoded({extended: false}));
+app.use(bodyParser.json());
+
+const  jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
+const config = require('./config');
 
 
 const categories = ['fruit', 'vegetable', 'dairy'];
@@ -67,6 +77,40 @@ app.use(methodOverride('_method'))
 app.get('/', (req,res)=>{
     res.send("started")
 })
+
+
+app.post('/register', async(req,res)=>{
+    const hashedPassword = bcrypt.hashSync(req.body.password, 8);
+
+    User.create({
+        name : req.body.name,
+        email : req.body.email,
+        password : hashedPassword
+      },
+      function (err, user) {
+        if (err) return res.status(500).send("There was a problem registering the user.")
+        // create a token
+        var token = jwt.sign({ id: user._id }, config.secret, {
+          expiresIn: 86400 // expires in 24 hours
+        });
+        res.status(200).send({ auth: true, token: token });
+      }); 
+    });
+
+
+app.get('/me', function(req, res) {
+    var token = req.headers['x-access-token'];
+    if (!token) return res.status(401).send({ auth: false, message: 'No token provided.' });
+    
+    jwt.verify(token, config.secret, function(err, decoded) {
+      if (err) return res.status(500).send({ auth: false, message: 'Failed to authenticate token.' });
+      
+      res.status(200).send(decoded);
+    });
+  });
+
+
+
 
 // Farm Routes
 app.get('/farms', async (req, res) => {
