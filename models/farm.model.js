@@ -11,16 +11,16 @@ const  farmSchema = new Schema({
     city: {
         type: String
     },
-    email: {
-        type: String,
-        required: [true, 'Email Required']
-    },
     products: [
         {
             type:Schema.Types.ObjectId,
             ref: 'Product'
         }
-    ]
+    ],
+    owner: {
+        type: Schema.Types.ObjectId,
+        ref: 'User'
+    }
 })
 
 farmSchema.post('findOneAndDelete', async function (farm) {

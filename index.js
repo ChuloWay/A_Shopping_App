@@ -79,24 +79,30 @@ app.get('/', (req,res)=>{
     res.send("started")
 })
 
+app.get('/register', (req,res)=>{
+    res.render('register')
+})
 
 app.post('/register', async(req,res)=>{
     const hashedPassword = bcrypt.hashSync(req.body.password, 8);
 
-    User.create({
-        name : req.body.name,
-        email : req.body.email,
-        password : hashedPassword
-      },
-      function (err, user) {
-        if (err) return res.status(500).send("There was a problem registering the user.")
-        // create a token
-        var token = jwt.sign({ id: user._id }, config.secret, {
-          expiresIn: 86400 // expires in 24 hours
-        });
-        res.status(200).send({ auth: true, token: token });
-      }); 
+  User.create({
+        name: req.body.name,
+        email: req.body.email,
+        // farm: req.body.farm,
+        password: hashedPassword
+    },
+        function (err, user) {
+            if (err)
+                return res.status(500).send("There was a problem registering the user.");
+            // create a token
+            var token = jwt.sign({ id: user._id }, config.secret, {
+                expiresIn: 86400 // expires in 24 hours
+            });
+            res.status(200).send({ auth: true, token: token });
+        }); 
     });
+
 
 
 app.get('/me',verify, function(req, res, next) {
@@ -142,7 +148,7 @@ app.get('/farms', async (req, res) => {
     res.render('farms/index', { farms})
 })
 
-app.get('/farms/new', (req, res) => {
+app.get('/farms/new', verify, (req, res) => {
     res.render('farms/new')
 })
 
@@ -152,10 +158,17 @@ app.get('/farms/:id', async (req, res) => {
     res.render('farms/show', { farm });
 })
 
-app.post('/farms', async (req, res) => {
+app.post('/farms', verify, async (req, res) => {
     const farm = new Farm(req.body)
     await farm.save();
-    console.log(farm); 
+    const farmOwner = await User.findById(req.userId)
+    console.log(req.userId)
+    console.log('owner:',farmOwner)
+    if(farmOwner){
+        farmOwner.farm = farm;
+    }
+   await farmOwner.save();
+    console.log('updated:', farmOwner); 
     req.flash('Success', 'Made a new Farm Entry!')
     res.redirect('/farms')
 })
