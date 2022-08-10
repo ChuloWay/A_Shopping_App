@@ -13,9 +13,7 @@ const methodOverride = require('method-override')
 const AppError = require('./AppError');
 const session = require('express-session');
 const flash = require('connect-flash')
-
-const {Product} = require('./models/product.model');
-const { Farm } = require('./models/farm.model');  
+  
 const {User} = require('./User/user.model')
 const {ProductResourceOptions} = require('./models/product.option')
 const {UserResourceOptions} = require("./User/user.options")
@@ -40,7 +38,6 @@ const config = require('./config');
 const verify = require('./verify');
 
 
-const categories = ['fruit', 'vegetable', 'dairy'];
 
 const sessionOptions = { secret:'topsecret', resave: false, saveUninitialized: false};
 app.use(session(sessionOptions));
@@ -79,71 +76,22 @@ app.get('/', (req,res)=>{
     res.send("started")
 })
 
-app.get('/register', (req,res)=>{
-    res.render('register')
-})
-
-app.post('/register', async(req,res)=>{
-    const hashedPassword = bcrypt.hashSync(req.body.password, 8);
-
-  User.create({
-        name: req.body.name,
-        email: req.body.email,
-        // farm: req.body.farm,
-        password: hashedPassword
-    },
-        function (err, user) {
-            if (err)
-                return res.status(500).send("There was a problem registering the user.");
-            // create a token
-            var token = jwt.sign({ id: user._id }, config.secret, {
-                expiresIn: 86400 // expires in 24 hours
-            });
-            req.headers.authorization = token
-            console.log(req.headers.cookie)
-            res.status(200).send({ auth: true, token: token });
-        }); 
-    });
+// User Controllers
+const {registerPage} = require('./controllers/user');
+const {registerUser} = require('./controllers/user');
+const {me} = require('./controllers/user');
+const {login} = require('./controllers/user');
+const {logout} = require('./controllers/user');
 
 
-
-app.get('/me',verify, function(req, res, next) {
-    //   res.status(200).send(decoded);
-    User.findById(req.userId,
-        // removes password from being seen
-        {password: 0}, function(err, user){
-        if (err) return res.status(500).send("There was a problem");
-        if(!user) return res.status(404).send("No User");
-
-        console.log(req.headers.cookie);
-
-        res.status(200).send(user)
-    })
-    });
-  
+// User Routes
+app.get('/register',registerPage);
+app.post('/register',registerUser);
+app.get('/me',me);
+app.post('/login',login);
+app.post('/logout',logout);
 
 
-app.post('/login', (req,res)=>{
-    User.findOne({email: req.body.email}, function(err,user) {
-        if(err) return res.status(500).send("server error")
-        if(!user) return res.status(404).send("No User") 
-        
-        
-
-        const validPassword = bcrypt.compareSync(req.body.password, user.password);
-        if(!validPassword) return res.status(401).send({auth: false, token: null});
-
-        const token = jwt.sign({ id: user._id}, config.secret, {
-            expiresIn: 86400
-        });
-        res.status(200).send({auth: true, token: token});
-
-    })
-})
-
-app.post('/logout', (req,res)=>{
-    res.status(200).send({ auth: false, token: null});
-});
 
 
 
