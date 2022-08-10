@@ -3,7 +3,7 @@ const app = express();
 
 const {Product} = require('../models/product.model');
 const { Farm } = require('../models/farm.model');  
-const {User} = require('../User/user.model');
+const {User} = require('../models/user.model');
 const verify = require('../verify');
 
 

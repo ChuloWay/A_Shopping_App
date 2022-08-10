@@ -1,24 +1,22 @@
+const express = require('express');
+const mongoose = require('mongoose');
+const app = express();
 const AdminJS = require('adminjs');
 const AdminJSExpress = require('@adminjs/express');
 const AdminJSMongoose = require('@adminjs/mongoose');
-
-AdminJS.registerAdapter(AdminJSMongoose);
-
 const bodyParser = require('body-parser')
-const express = require('express');
-const app = express();
 const path = require('path')
-const mongoose = require('mongoose');
 const methodOverride = require('method-override')
 const AppError = require('./AppError');
 const session = require('express-session');
 const flash = require('connect-flash')
-  
-const {User} = require('./User/user.model')
+
 const {ProductResourceOptions} = require('./models/product.option')
-const {UserResourceOptions} = require("./User/user.options")
+const {UserResourceOptions} = require("./models/user.options")
 const {FarmResourceOptions} = require("./models/farm.options")
+
 // init adminJS
+AdminJS.registerAdapter(AdminJSMongoose);
 const adminJS = new AdminJS({
     databases: [],
     rootPath: '/admin',
@@ -28,15 +26,8 @@ const adminJSRouter = AdminJSExpress.buildRouter(adminJS);
 
 
 app.use(adminJS.options.rootPath, adminJSRouter);
-
 app.use(bodyParser.urlencoded({extended: false}));
 app.use(bodyParser.json());
-
-const  jwt = require('jsonwebtoken');
-const bcrypt = require('bcryptjs');
-const config = require('./config');
-const verify = require('./verify');
-
 
 
 const sessionOptions = { secret:'topsecret', resave: false, saveUninitialized: false};
@@ -52,10 +43,6 @@ mongoose.connect('mongodb://localhost:27017/testfarm', { useNewUrlParser: true }
         console.log('Oh No Error In Connecting To Mongo');
         console.log(err);
     })
-
-
-
-    // Adding Authentication and Authorization For CRUD to be Performed.
 
 
 app.set('views', path.join(__dirname, 'views'))
@@ -92,9 +79,6 @@ app.post('/login',login);
 app.post('/logout',logout);
 
 
-
-
-
 // Farm Controllers
 const {index} = require('./controllers/farms')
 const {newFarmPage} = require('./controllers/farms')
@@ -103,6 +87,7 @@ const {createFarm} = require('./controllers/farms')
 const {deleteFarm} = require('./controllers/farms')
 const {createFarmProductPage} = require('./controllers/farms')
 const {newFarmProduct} = require('./controllers/farms')
+
 
 // Farm Routes
 app.get('/farms',index);
@@ -123,6 +108,7 @@ const {editProductPage} = require('./controllers/products');
 const {editproduct} = require('./controllers/products');
 const {deleteProduct} = require('./controllers/products');
 
+
 // Product Routes
 app.get('/products',productIndex);
 app.get('/products/new',newProductPage);
@@ -131,7 +117,6 @@ app.get('/products/:id',showProduct);
 app.get('/products/:id/edit',editProductPage);
 app.put('/products/:id',editproduct);
 app.delete('/products/:id',deleteProduct);
-
 
 
 const handleValidationError = err => {
@@ -145,6 +130,7 @@ app.use((err, req, res, next) => {
     if (err.name === 'ValidationError') err = handleValidationError(err)
     next(err)
 })
+
 
 app.use((err, req, res, next) => {
     const { status = 500, message = 'Something Went wrong' } = err;
