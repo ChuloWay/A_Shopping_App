@@ -1,4 +1,4 @@
-const {Product} = require('./models/product.model');
+const {Product} = require('../models/product.model');
 
 
 
@@ -10,7 +10,7 @@ function wrapAsync(fn) {
 
 
 
-module.exports.productIndex('/products', wrapAsync(async (req, res, next) => {
+module.exports.productIndex=('/products', wrapAsync(async (req, res, next) => {
     const { category } = req.query;
     if (category) {
         const products = await Product.find({ category })

@@ -3,7 +3,8 @@ const app = express();
 
 const {Product} = require('../models/product.model');
 const { Farm } = require('../models/farm.model');  
-const {User} = require('../User/user.model')
+const {User} = require('../User/user.model');
+const verify = require('../verify');
 
 
 
@@ -13,7 +14,7 @@ module.exports.index= (async (req, res) => {
     res.render('farms/index', { farms})
 })
 
-module.exports.newFarmPage = ('/farms/new', (req, res) => {
+module.exports.newFarmPage = ('/farms/new', verify, (req, res) => {
     res.render('farms/new')
 })
 
@@ -23,7 +24,7 @@ module.exports.showFarm=('/farms/:id', async (req, res) => {
     res.render('farms/show', { farm });
 })
 
-module.exports.createFarm=('/farms', async (req, res) => {
+module.exports.createFarm=('/farms', verify, async (req, res) => {
     const farm = new Farm(req.body)
     await farm.save();
     const farmOwner = await User.findById(req.userId)
