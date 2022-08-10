@@ -99,6 +99,8 @@ app.post('/register', async(req,res)=>{
             var token = jwt.sign({ id: user._id }, config.secret, {
                 expiresIn: 86400 // expires in 24 hours
             });
+            req.headers.authorization = token
+            console.log(req.headers)
             res.status(200).send({ auth: true, token: token });
         }); 
     });
@@ -113,6 +115,7 @@ app.get('/me',verify, function(req, res, next) {
         if (err) return res.status(500).send("There was a problem");
         if(!user) return res.status(404).send("No User");
 
+        console.log(req.headers);
 
         res.status(200).send(user)
     })
