@@ -100,7 +100,7 @@ app.post('/register', async(req,res)=>{
                 expiresIn: 86400 // expires in 24 hours
             });
             req.headers.authorization = token
-            console.log(req.headers)
+            console.log(req.headers.cookie)
             res.status(200).send({ auth: true, token: token });
         }); 
     });
@@ -115,7 +115,7 @@ app.get('/me',verify, function(req, res, next) {
         if (err) return res.status(500).send("There was a problem");
         if(!user) return res.status(404).send("No User");
 
-        console.log(req.headers);
+        console.log(req.headers.cookie);
 
         res.status(200).send(user)
     })
@@ -145,129 +145,157 @@ app.post('/logout', (req,res)=>{
     res.status(200).send({ auth: false, token: null});
 });
 
+
+
+// Farm Controllers
+const {index} = require('./controllers/farms')
+const {newFarmPage} = require('./controllers/farms')
+const {showFarm} = require('./controllers/farms')
+const {createFarm} = require('./controllers/farms')
+const {deleteFarm} = require('./controllers/farms')
+const {createFarmProductPage} = require('./controllers/farms')
+const {newFarmProduct} = require('./controllers/farms')
+
+
+app.get('/farms',index);
+app.get('/farms/new', newFarmPage)
+app.get('/farms/:id',showFarm)
+app.post('/farms', createFarm)
+app.delete('/farms/:id',deleteFarm)
+app.get('/farms/:id/products/new',createFarmProductPage)
+app.post('/farms/:id/products',newFarmProduct)
+
+
+
+
+
 // Farm Routes
-app.get('/farms', async (req, res) => {
-    const farms = await Farm.find({})
-    res.render('farms/index', { farms})
-})
+// app.get('/farms', async (req, res) => {
+//     const farms = await Farm.find({})
+//     res.render('farms/index', { farms})
+// })
 
-app.get('/farms/new', verify, (req, res) => {
-    res.render('farms/new')
-})
+// app.get('/farms/new', verify, (req, res) => {
+//     res.render('farms/new')
+// })
 
-app.get('/farms/:id', async (req, res) => {
-    const { id } = req.params;
-    const farm = await Farm.findById(id).populate('products');
-    res.render('farms/show', { farm });
-})
+// app.get('/farms/:id', async (req, res) => {
+//     const { id } = req.params;
+//     const farm = await Farm.findById(id).populate('products');
+//     res.render('farms/show', { farm });
+// })
 
-app.post('/farms', verify, async (req, res) => {
-    const farm = new Farm(req.body)
-    await farm.save();
-    const farmOwner = await User.findById(req.userId)
-    console.log(req.userId)
-    console.log('owner:',farmOwner)
-    if(farmOwner){
-        farmOwner.farm = farm;
-    }
-   await farmOwner.save();
-    console.log('updated:', farmOwner); 
-    req.flash('Success', 'Made a new Farm Entry!')
-    res.redirect('/farms')
-})
+// app.post('/farms', verify, async (req, res) => {
+//     const farm = new Farm(req.body)
+//     await farm.save();
+//     const farmOwner = await User.findById(req.userId)
+//     console.log(req.userId)
+//     console.log('owner:',farmOwner)
+//     if(farmOwner){
+//         farmOwner.farm = farm;
+//     }
+//    await farmOwner.save();
+//     console.log('updated:', farmOwner); 
+//     req.flash('Success', 'Made a new Farm Entry!')
+//     res.redirect('/farms')
+// })
 
-app.delete('/farms/:id', async(req,res) =>  {
-    const {id} = req.params;
-    const FarmDelete = await Farm.findByIdAndDelete(id);
-    res.redirect('/farms')
-})
+// app.delete('/farms/:id', async(req,res) =>  {
+//     const {id} = req.params;
+//     const FarmDelete = await Farm.findByIdAndDelete(id);
+//     res.redirect('/farms')
+// })
 
 // Linking products to farm
 
-//Mongo-Relationship: Creating a model field that appears inside another
-app.get('/farms/:id/products/new', async(req, res) => {
-    const { id } = req.params;
-    const farm = await Farm.findById(id);
-    res.render('products/new', { categories, farm })
-})
+// //Mongo-Relationship: Creating a model field that appears inside another
+// app.get('/farms/:id/products/new', async(req, res) => {
+//     const { id } = req.params;
+//     const farm = await Farm.findById(id);
+//     res.render('products/new', { categories, farm })
+// })
 
-app.post('/farms/:id/products', async (req, res) => {
-    const {id} = req.params;
-    const farm = await Farm.findById(id);
-    console.log(farm);
-    const { name, price, category } = req.body;
-    const product = new Product({ name, price, category })
-    farm.products.push(product);
-    product.farm=farm;
-    await farm.save();
-    await product.save();
-    res.redirect(`/farms/${id}`);
-})
-
-
-// Products Routes
+// app.post('/farms/:id/products', async (req, res) => {
+//     const {id} = req.params;
+//     const farm = await Farm.findById(id);
+//     console.log(farm);
+//     const { name, price, category } = req.body;
+//     const product = new Product({ name, price, category })
+//     farm.products.push(product);
+//     product.farm=farm;
+//     await farm.save();
+//     await product.save();
+//     res.redirect(`/farms/${id}`);
+// })
 
 
-app.get('/products', wrapAsync(async (req, res, next) => {
-    const { category } = req.query;
-    if (category) {
-        const products = await Product.find({ category })
-        res.render('products/index', { products, category })
+// // Products Routes
 
-    } else {
-        const products = await Product.find({})
-        res.render('products/index', { products, category: 'All' })
+
+// app.get('/products', wrapAsync(async (req, res, next) => {
+//     const { category } = req.query;
+//     if (category) {
+//         const products = await Product.find({ category })
+//         res.render('products/index', { products, category })
+
+//     } else {
+//         const products = await Product.find({})
+//         res.render('products/index', { products, category: 'All' })
+//     }
+// }))
+
+// app.get('/products/new', (req, res) => {
+//     res.render('products/new', { categories })
+// })
+// app.post('/products', wrapAsync(async (req, res, next) => {
+//     const newProduct = new Product(req.body);
+//     await newProduct.save();
+//     res.redirect(`/products/${newProduct._id}`)
+// }))
+
+// app.get('/products/:id', wrapAsync(async (req, res, next) => {
+//     const { id } = req.params;
+//     const product = await Product.findById(id).populate('farm','name')
+//     console.log(product);
+//     if (!product) {
+//         throw new AppError('No Product Found', 404);
+//     }
+//     res.render('products/show', { product })
+// }))
+
+// app.get('/products/:id/edit', wrapAsync(async (req, res, next) => {
+//     const { id } = req.params;
+//     const product = await Product.findById(id);
+//     if (!product) {
+//         throw new AppError('No Product Found', 404);
+//     }
+//     res.render('products/edit', { product, categories })
+// }))
+
+
+// app.put('/products/:id', wrapAsync(async (req, res, next) => {
+    //     const { id } = req.params;
+    //     // await makes every other thing to wait till the query and update has been made.
+    //     const product = await Product.findByIdAndUpdate(id, req.body, { runValidators: true, new: true });
+//     console.log('hello');
+//     // with await its now possible to access product._id
+//     res.redirect(`/products/${product._id}`);
+// }))
+
+// app.delete('/products/:id', wrapAsync(async (req, res) => {
+    //     const { id } = req.params;
+    //     const productDelete = await Product.findByIdAndDelete(id, req.body)
+    //     res.redirect('/products');
+    // }))
+    
+
+
+    function wrapAsync(fn) {
+        return function (req, res, next) {
+            fn(req, res, next).catch(e => next(e))
+        }
     }
-}))
 
-app.get('/products/new', (req, res) => {
-    res.render('products/new', { categories })
-})
-app.post('/products', wrapAsync(async (req, res, next) => {
-    const newProduct = new Product(req.body);
-    await newProduct.save();
-    res.redirect(`/products/${newProduct._id}`)
-}))
-
-app.get('/products/:id', wrapAsync(async (req, res, next) => {
-    const { id } = req.params;
-    const product = await Product.findById(id).populate('farm','name')
-    console.log(product);
-    if (!product) {
-        throw new AppError('No Product Found', 404);
-    }
-    res.render('products/show', { product })
-}))
-
-app.get('/products/:id/edit', wrapAsync(async (req, res, next) => {
-    const { id } = req.params;
-    const product = await Product.findById(id);
-    if (!product) {
-        throw new AppError('No Product Found', 404);
-    }
-    res.render('products/edit', { product, categories })
-}))
-
-function wrapAsync(fn) {
-    return function (req, res, next) {
-        fn(req, res, next).catch(e => next(e))
-    }
-}
-
-app.put('/products/:id', wrapAsync(async (req, res, next) => {
-    const { id } = req.params;
-    // await makes every other thing to wait till the query and update has been made.
-    const product = await Product.findByIdAndUpdate(id, req.body, { runValidators: true, new: true });
-    console.log('hello');
-    // with await its now possible to access product._id
-    res.redirect(`/products/${product._id}`);
-}))
-
-app.delete('/products/:id', wrapAsync(async (req, res) => {
-    const { id } = req.params;
-    const productDelete = await Product.findByIdAndDelete(id, req.body)
-    res.redirect('/products');
-}))
 
 const handleValidationError = err => {
     console.dir(err);
